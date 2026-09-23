@@ -190,11 +190,10 @@
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
   function refreshCount(){ countEl.textContent=questions.length+"問"; editCount.textContent=questions.length+"問"; }
 
-  // 撮影用: 必ず止まる質問（既定=卵の殻）。ランダムなら空文字
-  var FKEY="natsuko_roulette_forced_v1";
-  function loadForced(){ try{ var v=localStorage.getItem(FKEY); if(v!==null) return v; }catch(e){} return DEFAULT[0]; }
-  var forced=loadForced();
-  function saveForced(){ try{ localStorage.setItem(FKEY, forced); }catch(e){} }
+  // 撮影用: 毎回この質問だけに必ず止まる。切り替えはこの1行を変えて再公開する（指示を待つ）
+  var LOCKED = "卵の殻の色って何で決まるの?";
+  var forced = LOCKED;
+  function saveForced(){}   // LOCKED固定なので保存しない
   function buildForceOptions(){
     var sel=$("forceSel"); sel.innerHTML="";
     var o0=document.createElement("option"); o0.value=""; o0.textContent="🎯 ランダム"; sel.appendChild(o0);
@@ -284,8 +283,6 @@
     if(e.target===ta) return;
     if(e.key===" "){ e.preventDefault(); press(); return; }
     if(e.key==="e"||e.key==="E"){ openDrawer(); return; }           // 質問を編集（隠しキー）
-    if(e.key==="r"||e.key==="R"){ setForced(""); return; }          // 当たりをランダムに
-    if(/^[0-9]$/.test(e.key)){ var idx=(e.key==="0")?9:(parseInt(e.key,10)-1); if(idx>=0&&idx<questions.length) setForced(questions[idx]); }
   });
 
   var scrim=$("scrim"), drawer=$("drawer"), saveBtn=$("saveBtn");
