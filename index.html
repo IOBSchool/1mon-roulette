@@ -1,0 +1,298 @@
+<meta charset="utf-8">
+<title>なつこの1問ルーレット</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+  /* ── IOBカラー ③ OSブルー・ライト（MacBookを見せて撮る＝横位置フルスクリーン） ── */
+  :root{
+    --bg:#f5efe3; --bg-edge:#efe7d7; --ink:#3d2a1e;
+    --blue:#0085c9; --blue-deep:#1583c4; --teal:#2E8AA5;
+    --orange:#f26b3b; --brown-soft:#8a6f5c;
+    --line:rgba(46,138,165,.22);
+    --serif:"Zen Old Mincho", serif; --sans:"Noto Sans JP", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--ink);font-family:var(--sans);
+    background:radial-gradient(130% 90% at 50% 0%, #faf6ee 0%, var(--bg) 55%, var(--bg-edge) 100%);
+    min-height:100dvh;overflow:hidden;-webkit-tap-highlight-color:transparent;
+    display:flex;flex-direction:column;
+  }
+  .stage{
+    flex:1 1 auto;position:relative;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;cursor:pointer;user-select:none;padding:6vh 6vw;
+  }
+  .eyebrow{
+    position:absolute;top:5vh;left:0;right:0;text-align:center;font-weight:700;
+    font-size:clamp(13px,1.7vw,20px);letter-spacing:.5em;color:var(--teal);
+  }
+  .eyebrow::after{content:"";display:block;width:44px;height:3px;margin:14px auto 0;background:var(--blue);border-radius:2px;opacity:.8}
+
+  .qwrap{width:100%;max-width:1100px;display:flex;align-items:center;justify-content:center}
+  .q{
+    font-family:var(--serif);font-weight:700;color:var(--ink);text-align:center;text-wrap:balance;
+    line-height:1.42;font-size:clamp(34px, 7.2vw, 104px);letter-spacing:.01em;
+  }
+  .stage.spin .q{opacity:.9;filter:blur(.3px)}
+  .stage.locked .q{color:var(--blue-deep);animation:pop .44s cubic-bezier(.2,1.3,.4,1) both}
+  @keyframes pop{0%{transform:scale(.82);opacity:.15}55%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+  .stage.counting .q{color:var(--blue-deep);font-weight:900;line-height:1;font-size:clamp(120px, 26vw, 340px)}
+  .q.tick{animation:tick .62s cubic-bezier(.2,1.2,.35,1) both}
+  @keyframes tick{0%{transform:scale(1.5);opacity:.1}45%{opacity:1}100%{transform:scale(1);opacity:1}}
+
+  /* 60秒カウントダウン（質問が出た後に切り替わる） */
+  .timer{position:absolute;top:3.5vh;left:0;right:0;text-align:center;display:none;font-family:var(--sans)}
+  .stage.timing .timer,.stage.timeup .timer{display:block}
+  .stage.timing .eyebrow,.stage.timeup .eyebrow{display:none}
+  .timer .lbl{display:block;font-size:clamp(11px,1.4vw,15px);letter-spacing:.34em;color:var(--teal);margin-bottom:2px}
+  .timer .num{font-weight:700;font-size:clamp(34px,5.4vw,62px);line-height:1;color:var(--blue-deep);font-variant-numeric:tabular-nums}
+  .timer.warn .num{color:var(--orange)}
+  .stage.timeup .timer .num,.stage.timeup .timer .lbl{color:var(--orange)}
+  .pbar{position:absolute;left:0;right:0;bottom:0;height:10px;background:rgba(46,138,165,.14);display:none}
+  .stage.timing .pbar,.stage.timeup .pbar{display:block}
+  .pbar .fill{height:100%;width:100%;background:linear-gradient(90deg,var(--blue),var(--blue-deep))}
+  .stage.timeup .pbar .fill{background:var(--orange)}
+
+  .hint{
+    position:absolute;bottom:14vh;left:0;right:0;text-align:center;
+    font-size:clamp(12px,1.5vw,17px);color:var(--brown-soft);letter-spacing:.12em;
+    animation:breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.9}}
+  .stage.spin .hint,.stage.counting .hint,.stage.timing .hint{animation:none;opacity:0}
+
+  footer{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px 5vh}
+  .go{
+    appearance:none;border:none;cursor:pointer;font-family:var(--sans);font-weight:700;
+    font-size:clamp(16px,2vw,22px);letter-spacing:.1em;color:#fff;
+    background:linear-gradient(180deg,var(--blue),var(--blue-deep));
+    padding:16px 60px;border-radius:999px;min-width:240px;
+    box-shadow:0 10px 26px rgba(0,133,201,.28), inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .12s, filter .12s;
+  }
+  .go:hover{filter:brightness(1.05)}
+  .go:active{transform:translateY(1px)}
+  .go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  .go[data-state="spin"]{background:linear-gradient(180deg,#3d2a1e,#2c1f16)}
+  .foot-note{font-size:12px;color:var(--brown-soft);letter-spacing:.04em}
+
+  .tools{position:fixed;top:14px;right:14px;z-index:30;display:flex;gap:8px}
+  .ghost{
+    appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.5);color:var(--teal);
+    font-family:var(--sans);font-size:12px;padding:8px 13px;border-radius:999px;cursor:pointer;
+    transition:.15s;white-space:nowrap;backdrop-filter:blur(4px);
+  }
+  .ghost:hover{color:var(--blue);border-color:var(--blue)}
+  .ghost:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .count{position:fixed;left:16px;bottom:14px;z-index:30;font-size:12px;color:var(--brown-soft);letter-spacing:.05em;font-variant-numeric:tabular-nums}
+
+  body.filming footer,body.filming .tools,body.filming .count{display:none}
+
+  .scrim{position:fixed;inset:0;background:rgba(45,30,20,.5);opacity:0;pointer-events:none;transition:.2s;z-index:50}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;right:0;bottom:0;width:min(94vw,460px);z-index:60;background:#fbf7f0;
+    border-left:1px solid var(--line);transform:translateX(100%);transition:transform .24s ease;
+    display:flex;flex-direction:column;padding:22px 18px;gap:14px;
+  }
+  .drawer.open{transform:none}
+  .drawer h2{margin:0;font-family:var(--serif);font-weight:700;font-size:19px;color:var(--ink)}
+  .drawer p{margin:0;font-size:12.5px;line-height:1.7;color:var(--brown-soft)}
+  .drawer textarea{
+    flex:1 1 auto;width:100%;resize:none;min-height:220px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.9;padding:12px 14px;
+  }
+  .drawer textarea:focus{outline:2px solid var(--blue);outline-offset:0}
+  .drawer .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .save{
+    appearance:none;border:none;cursor:pointer;font-family:var(--sans);font-weight:700;font-size:14px;
+    color:#fff;background:var(--blue);padding:11px 22px;border-radius:999px;
+  }
+  .save:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .drawer .n{font-size:12px;color:var(--brown-soft);font-variant-numeric:tabular-nums}
+
+  @media (prefers-reduced-motion: reduce){ .stage.locked .q,.hint{animation:none} }
+</style>
+
+<main class="stage" id="stage" role="button" tabindex="0" aria-label="タップで回す・止める">
+  <div class="eyebrow">今日の1問</div>
+  <div class="timer" id="timer"><span class="lbl">残り</span><span class="num" id="timerNum">60</span></div>
+  <div class="qwrap"><div class="q" id="q">タップで回す</div></div>
+  <div class="hint" id="hint">画面をタップでスタート</div>
+  <div class="pbar"><div class="fill" id="fill"></div></div>
+</main>
+
+<footer>
+  <button class="go" id="go" data-state="idle">スタート</button>
+  <div class="foot-note">スペースキー / 画面タップでもOK ・ Hキーで撮影モード</div>
+</footer>
+
+<div class="tools">
+  <select class="ghost" id="forceSel" title="必ず止まる質問（撮影用）。ランダムなら指定なし"></select>
+  <button class="ghost" id="filmBtn" title="Hキーでも切替。ボタン類を隠して質問だけにする">● 撮影モード</button>
+  <button class="ghost" id="editBtn">✎ 質問を編集</button>
+</div>
+<div class="count" id="count"></div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="質問リストの編集">
+  <div class="row">
+    <h2>今日の質問リスト</h2>
+    <span class="n" id="editCount"></span>
+  </div>
+  <p>1行に1問。ここを書き換えるとルーレットの中身が変わります（このブラウザに保存）。<br>元の受講生質問138問はバンクに保管済み。</p>
+  <textarea id="ta" spellcheck="false" aria-label="質問リスト(1行1問)"></textarea>
+  <div class="row">
+    <button class="save" id="saveBtn">保存して閉じる</button>
+    <span class="n">保存先: このブラウザ</span>
+  </div>
+</aside>
+
+<script>
+(function(){
+  "use strict";
+  var DEFAULT = [
+    "卵の殻の色って何で決まるの?",
+    "農薬って洗えば落ちるの?",
+    "オーガニック食材 電子レンジはアリ?",
+    "ワセリンって本当に安全?",
+    "はちみつ 蜂から奪ってていいの?",
+    "水耕栽培って無農薬なの?",
+    "安い服＝遺伝子組換えコットン?",
+    "赤ちゃんに安心して使えるケアは?",
+    "オーガニックのりんごの白い綿 カビ?",
+    "コスメは100%有機じゃなくていいの?"
+  ];
+  var KEY = "natsuko_roulette_questions_v2";
+  var COUNT_STEP=700;    // 3→2→1 の間隔(ms)
+  var SPIN_MS=1500;      // 高速回転の時間(ms)
+  var ANSWER_SEC=60;     // 回答カウントダウン(秒)
+
+  var $ = function(id){ return document.getElementById(id); };
+  var stage=$("stage"), qEl=$("q"), hint=$("hint"), countEl=$("count"), go=$("go"),
+      ta=$("ta"), editCount=$("editCount"),
+      timerEl=$("timer"), timerNum=$("timerNum"), fill=$("fill");
+
+  function load(){
+    try{ var s=localStorage.getItem(KEY); if(s){ var a=JSON.parse(s); if(Array.isArray(a)&&a.length) return a; } }catch(e){}
+    return DEFAULT.slice();
+  }
+  function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
+
+  var questions = load();
+  var order=[], oi=0, raf=0, lastSwap=0, delay=42, state="idle", decel=null;
+  var countIv=null, spinTimer=null, timerIv=null, remaining=0;
+
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function refreshCount(){ countEl.textContent=questions.length+"問"; editCount.textContent=questions.length+"問"; }
+
+  // 撮影用: 必ず止まる質問（既定=卵の殻）。ランダムなら空文字
+  var FKEY="natsuko_roulette_forced_v1";
+  function loadForced(){ try{ var v=localStorage.getItem(FKEY); if(v!==null) return v; }catch(e){} return DEFAULT[0]; }
+  var forced=loadForced();
+  function saveForced(){ try{ localStorage.setItem(FKEY, forced); }catch(e){} }
+  function buildForceOptions(){
+    var sel=$("forceSel"); sel.innerHTML="";
+    var o0=document.createElement("option"); o0.value=""; o0.textContent="🎯 ランダム"; sel.appendChild(o0);
+    questions.forEach(function(q){ var op=document.createElement("option"); op.value=q; op.textContent="🎯 "+(q.length>13?q.slice(0,13)+"…":q); sel.appendChild(op); });
+    if(forced && questions.indexOf(forced)<0){ forced=""; saveForced(); }
+    sel.value=forced;
+  }
+  function setGo(label, st){ go.textContent=label; go.setAttribute("data-state", st); }
+  function show(text){ qEl.textContent=text; }
+  function showTick(text){ show(text); qEl.classList.remove("tick"); void qEl.offsetWidth; qEl.classList.add("tick"); }
+  function clearAll(){ clearInterval(countIv); clearTimeout(spinTimer); clearInterval(timerIv); cancelAnimationFrame(raf); raf=0; }
+  function resetBar(){ fill.style.transition="none"; fill.style.width="100%"; }
+
+  // ワンタップで: 3・2・1 → 高速回転 → 自動ストップ → 質問表示 → 60秒カウントダウン
+  function begin(){
+    if(!questions.length || state==="counting" || state==="spin" || state==="stopping") return;
+    clearAll(); resetBar();
+    state="counting";
+    stage.classList.remove("locked","timing","timeup","spin"); stage.classList.add("counting");
+    timerEl.classList.remove("warn"); hint.textContent=""; setGo("カウント中…","spin");
+    var n=3; showTick(String(n));
+    countIv=setInterval(function(){
+      n--;
+      if(n>=1){ showTick(String(n)); }
+      else { clearInterval(countIv); startSpin(); }
+    }, COUNT_STEP);
+  }
+  function startSpin(){
+    order=shuffle(questions); oi=0; lastSwap=0; delay=42; decel=null;
+    state="spin"; stage.classList.remove("counting"); stage.classList.add("spin"); qEl.classList.remove("tick");
+    setGo("回転中…","spin");
+    cancelAnimationFrame(raf); raf=requestAnimationFrame(tick);
+    clearTimeout(spinTimer); spinTimer=setTimeout(stopSpin, SPIN_MS);
+  }
+  function stopSpin(){
+    if(state!=="spin") return;
+    state="stopping";
+    var swaps=16+Math.floor(Math.random()*8), i=0;
+    decel=function(){ var t=i/swaps; delay=42+(430-42)*(t*t); i++; if(i>swaps){ land(); return false; } return true; };
+  }
+  function land(){
+    stage.classList.remove("spin"); stage.classList.add("locked");
+    cancelAnimationFrame(raf); raf=0;
+    if(forced && questions.indexOf(forced)>=0){ show(forced); }   // 撮影用の確定質問で上書き
+    startTimer();
+  }
+  function startTimer(){
+    state="timing"; stage.classList.remove("timeup"); stage.classList.add("timing");
+    timerEl.classList.remove("warn"); hint.textContent=""; setGo("やり直し","spin");
+    remaining=ANSWER_SEC; timerNum.textContent=remaining;
+    // プログレスバー: 100%→0% を60秒かけて
+    resetBar(); void fill.offsetWidth;
+    fill.style.transition="width "+ANSWER_SEC+"s linear"; fill.style.width="0%";
+    clearInterval(timerIv);
+    timerIv=setInterval(function(){
+      remaining--;
+      if(remaining<=10) timerEl.classList.add("warn");
+      if(remaining<=0){ remaining=0; timerNum.textContent="0"; clearInterval(timerIv); timeUp(); return; }
+      timerNum.textContent=remaining;
+    }, 1000);
+  }
+  function timeUp(){
+    state="timeup"; stage.classList.remove("timing"); stage.classList.add("timeup");
+    hint.textContent="タップで次の質問"; setGo("次の質問","idle");
+  }
+  function swap(){ show(order[oi % order.length]); oi++; }
+  function tick(ts){
+    if(!lastSwap) lastSwap=ts;
+    if(ts-lastSwap>=delay){ lastSwap=ts; swap(); if(state==="stopping"&&decel){ if(!decel())return; } }
+    if(state==="spin"||state==="stopping") raf=requestAnimationFrame(tick);
+  }
+  function press(){ if(state==="idle"||state==="stopped"||state==="timing"||state==="timeup") begin(); }
+
+  go.addEventListener("click", press);
+  stage.addEventListener("click", press);
+  stage.addEventListener("keydown", function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); press(); } });
+  document.addEventListener("keydown", function(e){
+    if(e.target===ta) return;
+    if(e.key===" "){ e.preventDefault(); press(); }
+    else if(e.key==="h"||e.key==="H"){ document.body.classList.toggle("filming"); }
+  });
+
+  $("filmBtn").addEventListener("click", function(){ document.body.classList.toggle("filming"); });
+
+  var scrim=$("scrim"), drawer=$("drawer"), saveBtn=$("saveBtn");
+  function openDrawer(){ ta.value=questions.join("\n"); scrim.classList.add("open"); drawer.classList.add("open"); setTimeout(function(){ta.focus();},200); }
+  function closeDrawer(){ scrim.classList.remove("open"); drawer.classList.remove("open"); }
+  $("editBtn").addEventListener("click", openDrawer);
+  scrim.addEventListener("click", closeDrawer);
+  saveBtn.addEventListener("click", function(){
+    var a=ta.value.split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+    if(a.length){ questions=a; save(questions); }
+    refreshCount(); buildForceOptions(); closeDrawer();
+    clearAll(); resetBar();
+    state="idle"; stage.classList.remove("spin","locked","counting","timing","timeup"); qEl.classList.remove("tick");
+    setGo("スタート","idle"); qEl.textContent="タップで回す"; hint.textContent="画面をタップでスタート";
+  });
+
+  $("forceSel").addEventListener("change", function(e){ forced=e.target.value; saveForced(); });
+
+  refreshCount(); buildForceOptions();
+})();
+</script>
