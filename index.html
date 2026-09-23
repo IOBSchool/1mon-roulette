@@ -196,7 +196,7 @@
   function buildForceOptions(){
     var sel=$("forceSel"); sel.innerHTML="";
     var o0=document.createElement("option"); o0.value=""; o0.textContent="🎯 ランダム"; sel.appendChild(o0);
-    questions.forEach(function(q){ var op=document.createElement("option"); op.value=q; op.textContent="🎯 "+(q.length>13?q.slice(0,13)+"…":q); sel.appendChild(op); });
+    questions.forEach(function(q,i){ var op=document.createElement("option"); op.value=q; op.textContent="🎯 問"+(i+1); sel.appendChild(op); });
     if(forced && questions.indexOf(forced)<0){ forced=""; saveForced(); }
     sel.value=forced;
   }
